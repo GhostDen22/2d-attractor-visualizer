@@ -34,4 +34,3 @@ js/
 .gitignore
 index.html
 README.md
-text```
