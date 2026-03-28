@@ -53,6 +53,8 @@ const ctx = canvas.getContext("2d");
 
 const attractorMode = document.getElementById("attractorMode");
 const renderMode = document.getElementById("renderMode");
+const debugMode = document.getElementById("debugMode");
+const debugModeWrapper = document.getElementById("debugModeWrapper");
 const canvasModeLabel = document.getElementById("canvasModeLabel");
 const appStatus = document.getElementById("appStatus");
 
@@ -74,19 +76,6 @@ const valueB = document.getElementById("valueB");
 const valueC = document.getElementById("valueC");
 const valueD = document.getElementById("valueD");
 
-const controlsToLock = [
-  attractorMode,
-  renderMode,
-  paramAInput,
-  paramBInput,
-  paramCInput,
-  paramDInput,
-  fpsControlInput,
-  pointsPerFrameInput,
-  startBtn,
-  ...colorButtons
-];
-
 const renderSettings = {
   pointAlpha: 0.18,
   pointShadowBlur: 5,
@@ -101,6 +90,36 @@ let lastFrameTime = 0;
 let currentX = 0;
 let currentY = 0;
 let needsFreshRender = false;
+
+function isStaticDebugUnlocked() {
+  return isRunning && renderMode.value === "static" && debugMode.checked;
+}
+
+function updateDebugModeVisibility() {
+  const isStaticMode = renderMode.value === "static";
+
+  debugModeWrapper.style.display = isStaticMode ? "block" : "none";
+
+  if (!isStaticMode) {
+    debugMode.checked = false;
+  }
+}
+
+function getAlwaysLockedControls() {
+  return [attractorMode, renderMode, startBtn];
+}
+
+function getDebugUnlockableControls() {
+  return [
+    paramAInput,
+    paramBInput,
+    paramCInput,
+    paramDInput,
+    fpsControlInput,
+    pointsPerFrameInput,
+    ...colorButtons
+  ];
+}
 
 function updateSliderValue(inputId, valueId, decimals) {
   const input = document.getElementById(inputId);
@@ -332,10 +351,19 @@ function animationLoop(timestamp) {
 }
 
 function setControlsLocked(locked) {
-  controlsToLock.forEach((element) => {
+  const alwaysLockedControls = getAlwaysLockedControls();
+  const debugUnlockableControls = getDebugUnlockableControls();
+  const unlockDebugControls = locked && isStaticDebugUnlocked();
+
+  alwaysLockedControls.forEach((element) => {
     element.disabled = locked;
   });
 
+  debugUnlockableControls.forEach((element) => {
+    element.disabled = locked && !unlockDebugControls;
+  });
+
+  debugMode.disabled = locked && !unlockDebugControls;
   stopBtn.disabled = !locked;
   resetBtn.disabled = false;
 }
@@ -396,7 +424,15 @@ function prepareFreshRender(statusText = "Ready to render") {
 }
 
 function handleSettingsChanged() {
-  if (isRunning) {
+  if (isRunning && !isStaticDebugUnlocked()) {
+    return;
+  }
+
+  if (isRunning && isStaticDebugUnlocked()) {
+    clearCanvas();
+    resetAttractorState();
+    needsFreshRender = false;
+    appStatus.textContent = "Debug update applied";
     return;
   }
 
@@ -405,6 +441,7 @@ function handleSettingsChanged() {
 
 function initializeModeSelect() {
   updateModeLabel();
+  updateDebugModeVisibility();
 
   attractorMode.addEventListener("change", () => {
     const selectedMode = attractorMode.value;
@@ -415,7 +452,14 @@ function initializeModeSelect() {
 
   renderMode.addEventListener("change", () => {
     applyRenderModeDefaults(renderMode.value);
+    updateDebugModeVisibility();
+    setControlsLocked(isRunning);
     prepareFreshRender(`${getRenderModeLabel(renderMode.value)} selected`);
+  });
+
+  debugMode.addEventListener("change", () => {
+    setControlsLocked(isRunning);
+    appStatus.textContent = debugMode.checked ? "Debug mode enabled" : "Debug mode disabled";
   });
 }
 
@@ -457,6 +501,7 @@ function initializeControlButtons() {
 
     applyDefaultParameters(currentMode);
     applyRenderModeDefaults(currentRenderMode);
+    updateDebugModeVisibility();
     syncDisplayedValuesWithInputs();
     updateModeLabel();
     prepareFreshRender("Reset to default");
@@ -479,6 +524,7 @@ function initializeApp() {
   applyDefaultParameters("dejong");
   applyRenderModeDefaults("static");
   updateModeLabel();
+  updateDebugModeVisibility();
 
   setControlsLocked(false);
   stopBtn.disabled = true;
