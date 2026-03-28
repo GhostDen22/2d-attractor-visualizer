@@ -1,18 +1,37 @@
 # 2D Attractor Visualizer
 
-Interactive web application for visualizing and animating 2D attractors:
+Interactive web application for visualizing and animating two 2D attractors:
 - Peter de Jong attractor
 - Clifford attractor
 
+## Live Demo
+
+[Open the demo](https://ghostden22.github.io/2d-attractor-visualizer/)
+
+## Features
+
+- two attractor modes: Peter de Jong and Clifford
+- two render modes: Static Render and Dynamic Render
+- parameter control with sliders
+- animation control: Start, Stop, Reset
+- color selection
+- Debug Mode for Static Render
+- responsive layout for desktop and mobile
+
 ## Technologies
+
 - HTML
 - CSS
 - JavaScript
+- Canvas API
 
-## Features planned
-- two attractor modes
-- parameter controls
-- animation controls
-- drawing color selection
-- responsive layout for desktop and smartphone
-- university logo section
+## Project Structure
+
+```text
+assets/
+css/
+js/
+.gitignore
+index.html
+README.md
+text```
