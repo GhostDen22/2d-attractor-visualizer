@@ -13,6 +13,12 @@ const defaults = {
     b: -2.3,
     c: 2.4,
     d: -2.1
+  },
+  clifford: {
+    a: -1.4,
+    b: 1.6,
+    c: 1.0,
+    d: 0.7
   }
 };
 
@@ -47,6 +53,13 @@ const controlsToLock = [
   startBtn,
   ...colorButtons
 ];
+
+const renderSettings = {
+  pointAlpha: 0.18,
+  pointShadowBlur: 5,
+  pointRadius: 0.9,
+  fadeStrength: 0.045
+};
 
 let selectedColor = "#ff4d4d";
 let isRunning = false;
@@ -86,9 +99,12 @@ function initializeSliders() {
   });
 }
 
+function getModeLabel(mode) {
+  return mode === "dejong" ? "Peter de Jong" : "Clifford";
+}
+
 function updateModeLabel() {
-  canvasModeLabel.textContent =
-    attractorMode.value === "dejong" ? "Peter de Jong" : "Clifford";
+  canvasModeLabel.textContent = getModeLabel(attractorMode.value);
 }
 
 function clearCanvas() {
@@ -102,7 +118,7 @@ function clearCanvas() {
 function applyFadeEffect() {
   ctx.save();
   ctx.globalAlpha = 1;
-  ctx.fillStyle = "rgba(0, 0, 0, 0.045)";
+  ctx.fillStyle = `rgba(0, 0, 0, ${renderSettings.fadeStrength})`;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.restore();
 }
@@ -128,6 +144,21 @@ function computeDeJongNextPoint(x, y, params) {
   return { x: nextX, y: nextY };
 }
 
+function computeCliffordNextPoint(x, y, params) {
+  const nextX = Math.sin(params.a * y) + params.c * Math.cos(params.a * x);
+  const nextY = Math.sin(params.b * x) + params.d * Math.cos(params.b * y);
+
+  return { x: nextX, y: nextY };
+}
+
+function computeNextPoint(mode, x, y, params) {
+  if (mode === "clifford") {
+    return computeCliffordNextPoint(x, y, params);
+  }
+
+  return computeDeJongNextPoint(x, y, params);
+}
+
 function mapToCanvas(x, y) {
   const scale = Math.min(canvas.width, canvas.height) * 0.18;
   const canvasX = canvas.width / 2 + x * scale;
@@ -150,25 +181,26 @@ function drawSoftPoint(x, y, color) {
 
   ctx.save();
   ctx.fillStyle = color;
-  ctx.globalAlpha = 0.18;
-  ctx.shadowBlur = 5;
+  ctx.globalAlpha = renderSettings.pointAlpha;
+  ctx.shadowBlur = renderSettings.pointShadowBlur;
   ctx.shadowColor = color;
 
   ctx.beginPath();
-  ctx.arc(mapped.x, mapped.y, 0.9, 0, Math.PI * 2);
+  ctx.arc(mapped.x, mapped.y, renderSettings.pointRadius, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
 }
 
-function drawDeJongBatch() {
+function drawAttractorBatch() {
+  const mode = attractorMode.value;
   const params = getCurrentParameters();
   const pointsPerFrame = Number(pointsPerFrameInput.value);
 
   applyFadeEffect();
 
   for (let i = 0; i < pointsPerFrame; i += 1) {
-    const nextPoint = computeDeJongNextPoint(currentX, currentY, params);
+    const nextPoint = computeNextPoint(mode, currentX, currentY, params);
     currentX = nextPoint.x;
     currentY = nextPoint.y;
 
@@ -187,10 +219,7 @@ function animationLoop(timestamp) {
   const frameInterval = 1000 / fps;
 
   if (!lastFrameTime || timestamp - lastFrameTime >= frameInterval) {
-    if (attractorMode.value === "dejong") {
-      drawDeJongBatch();
-    }
-
+    drawAttractorBatch();
     lastFrameTime = timestamp;
   }
 
@@ -211,11 +240,6 @@ function startAnimation() {
     return;
   }
 
-  if (attractorMode.value !== "dejong") {
-    appStatus.textContent = "Clifford mode will be added next";
-    return;
-  }
-
   if (needsFreshRender) {
     clearCanvas();
     resetAttractorState();
@@ -225,7 +249,7 @@ function startAnimation() {
   isRunning = true;
   lastFrameTime = 0;
   setControlsLocked(true);
-  appStatus.textContent = "Running";
+  appStatus.textContent = `Running ${getModeLabel(attractorMode.value)}`;
 
   animationFrameId = window.requestAnimationFrame(animationLoop);
 }
@@ -278,14 +302,10 @@ function initializeModeSelect() {
   updateModeLabel();
 
   attractorMode.addEventListener("change", () => {
+    const selectedMode = attractorMode.value;
     updateModeLabel();
-
-    if (attractorMode.value === "dejong") {
-      applyDefaultParameters("dejong");
-      prepareFreshRender("Peter de Jong selected");
-    } else {
-      prepareFreshRender("Clifford mode will be added next");
-    }
+    applyDefaultParameters(selectedMode);
+    prepareFreshRender(`${getModeLabel(selectedMode)} selected`);
   });
 }
 
