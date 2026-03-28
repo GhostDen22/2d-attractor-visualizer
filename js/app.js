@@ -17,7 +17,7 @@ const defaults = {
   clifford: {
     a: -1.4,
     b: 1.6,
-    c: 1.0,
+    c: 2.1,
     d: 0.7
   }
 };
@@ -335,7 +335,8 @@ function initializeControlButtons() {
       stopAnimation();
     }
 
-    attractorMode.value = "dejong";
+    const currentMode = attractorMode.value;
+
     fpsControlInput.value = "30";
     pointsPerFrameInput.value = "1000";
     selectedColor = "#ff4d4d";
@@ -344,7 +345,7 @@ function initializeControlButtons() {
       button.classList.toggle("is-active", button.dataset.color === selectedColor);
     });
 
-    applyDefaultParameters("dejong");
+    applyDefaultParameters(currentMode);
 
     sliderMappings.forEach(({ inputId, valueId, decimals }) => {
       updateSliderValue(inputId, valueId, decimals);
