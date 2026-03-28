@@ -92,13 +92,19 @@ function updateModeLabel() {
 }
 
 function clearCanvas() {
+  ctx.save();
+  ctx.globalAlpha = 1;
   ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
 }
 
 function applyFadeEffect() {
-  ctx.fillStyle = "rgba(0, 0, 0, 0.035)";
+  ctx.save();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "rgba(0, 0, 0, 0.045)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
 }
 
 function resetAttractorState() {
@@ -130,7 +136,7 @@ function mapToCanvas(x, y) {
   return { x: canvasX, y: canvasY };
 }
 
-function drawPoint(x, y, color) {
+function drawSoftPoint(x, y, color) {
   const mapped = mapToCanvas(x, y);
 
   if (
@@ -142,8 +148,17 @@ function drawPoint(x, y, color) {
     return;
   }
 
+  ctx.save();
   ctx.fillStyle = color;
-  ctx.fillRect(mapped.x, mapped.y, 1, 1);
+  ctx.globalAlpha = 0.18;
+  ctx.shadowBlur = 5;
+  ctx.shadowColor = color;
+
+  ctx.beginPath();
+  ctx.arc(mapped.x, mapped.y, 0.9, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
 }
 
 function drawDeJongBatch() {
@@ -158,7 +173,7 @@ function drawDeJongBatch() {
     currentY = nextPoint.y;
 
     if (i > 20) {
-      drawPoint(currentX, currentY, selectedColor);
+      drawSoftPoint(currentX, currentY, selectedColor);
     }
   }
 }
