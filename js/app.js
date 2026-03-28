@@ -22,10 +22,37 @@ const defaults = {
   }
 };
 
+const renderModeDefaults = {
+  static: {
+    pointsPerFrame: 1000,
+    fadeStrength: 0.045
+  },
+  dynamic: {
+    pointsPerFrame: 2000,
+    fadeStrength: 0.09
+  }
+};
+
+const morphProfiles = {
+  dejong: {
+    a: { amplitude: 0.35, speed: 0.75, phase: 0.0 },
+    b: { amplitude: 0.30, speed: 0.55, phase: 1.1 },
+    c: { amplitude: 0.28, speed: 0.65, phase: 2.0 },
+    d: { amplitude: 0.25, speed: 0.45, phase: 2.7 }
+  },
+  clifford: {
+    a: { amplitude: 0.22, speed: 0.70, phase: 0.3 },
+    b: { amplitude: 0.18, speed: 0.50, phase: 1.4 },
+    c: { amplitude: 0.26, speed: 0.60, phase: 2.2 },
+    d: { amplitude: 0.16, speed: 0.42, phase: 2.9 }
+  }
+};
+
 const canvas = document.getElementById("attractorCanvas");
 const ctx = canvas.getContext("2d");
 
 const attractorMode = document.getElementById("attractorMode");
+const renderMode = document.getElementById("renderMode");
 const canvasModeLabel = document.getElementById("canvasModeLabel");
 const appStatus = document.getElementById("appStatus");
 
@@ -42,8 +69,14 @@ const paramDInput = document.getElementById("paramD");
 const fpsControlInput = document.getElementById("fpsControl");
 const pointsPerFrameInput = document.getElementById("pointsPerFrame");
 
+const valueA = document.getElementById("valueA");
+const valueB = document.getElementById("valueB");
+const valueC = document.getElementById("valueC");
+const valueD = document.getElementById("valueD");
+
 const controlsToLock = [
   attractorMode,
+  renderMode,
   paramAInput,
   paramBInput,
   paramCInput,
@@ -57,8 +90,7 @@ const controlsToLock = [
 const renderSettings = {
   pointAlpha: 0.18,
   pointShadowBlur: 5,
-  pointRadius: 0.9,
-  fadeStrength: 0.045
+  pointRadius: 0.9
 };
 
 let selectedColor = "#ff4d4d";
@@ -82,6 +114,19 @@ function updateSliderValue(inputId, valueId, decimals) {
   valueElement.textContent = value.toFixed(decimals);
 }
 
+function syncDisplayedValuesWithInputs() {
+  sliderMappings.forEach(({ inputId, valueId, decimals }) => {
+    updateSliderValue(inputId, valueId, decimals);
+  });
+}
+
+function setDisplayedParameterValues(params) {
+  valueA.textContent = params.a.toFixed(2);
+  valueB.textContent = params.b.toFixed(2);
+  valueC.textContent = params.c.toFixed(2);
+  valueD.textContent = params.d.toFixed(2);
+}
+
 function initializeSliders() {
   sliderMappings.forEach(({ inputId, valueId, decimals }) => {
     const input = document.getElementById(inputId);
@@ -103,6 +148,10 @@ function getModeLabel(mode) {
   return mode === "dejong" ? "Peter de Jong" : "Clifford";
 }
 
+function getRenderModeLabel(mode) {
+  return mode === "dynamic" ? "Dynamic Render" : "Static Render";
+}
+
 function updateModeLabel() {
   canvasModeLabel.textContent = getModeLabel(attractorMode.value);
 }
@@ -115,12 +164,27 @@ function clearCanvas() {
   ctx.restore();
 }
 
+function getCurrentFadeStrength() {
+  return renderModeDefaults[renderMode.value].fadeStrength;
+}
+
 function applyFadeEffect() {
   ctx.save();
   ctx.globalAlpha = 1;
-  ctx.fillStyle = `rgba(0, 0, 0, ${renderSettings.fadeStrength})`;
+  ctx.fillStyle = `rgba(0, 0, 0, ${getCurrentFadeStrength()})`;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.restore();
+}
+
+function applyRenderModeDefaults(mode) {
+  const selectedDefaults = renderModeDefaults[mode];
+
+  if (!selectedDefaults) {
+    return;
+  }
+
+  pointsPerFrameInput.value = String(selectedDefaults.pointsPerFrame);
+  updateSliderValue("pointsPerFrame", "valuePoints", 0);
 }
 
 function resetAttractorState() {
@@ -128,12 +192,44 @@ function resetAttractorState() {
   currentY = 0;
 }
 
-function getCurrentParameters() {
+function getCurrentParametersFromInputs() {
   return {
     a: Number(paramAInput.value),
     b: Number(paramBInput.value),
     c: Number(paramCInput.value),
     d: Number(paramDInput.value)
+  };
+}
+
+function clampParameterValue(input, value) {
+  const min = Number(input.min);
+  const max = Number(input.max);
+
+  return Math.min(max, Math.max(min, value));
+}
+
+function getMorphedParameters(timeSeconds) {
+  const mode = attractorMode.value;
+  const base = getCurrentParametersFromInputs();
+  const profile = morphProfiles[mode];
+
+  return {
+    a: clampParameterValue(
+      paramAInput,
+      base.a + profile.a.amplitude * Math.sin(timeSeconds * profile.a.speed + profile.a.phase)
+    ),
+    b: clampParameterValue(
+      paramBInput,
+      base.b + profile.b.amplitude * Math.sin(timeSeconds * profile.b.speed + profile.b.phase)
+    ),
+    c: clampParameterValue(
+      paramCInput,
+      base.c + profile.c.amplitude * Math.sin(timeSeconds * profile.c.speed + profile.c.phase)
+    ),
+    d: clampParameterValue(
+      paramDInput,
+      base.d + profile.d.amplitude * Math.sin(timeSeconds * profile.d.speed + profile.d.phase)
+    )
   };
 }
 
@@ -192,9 +288,8 @@ function drawSoftPoint(x, y, color) {
   ctx.restore();
 }
 
-function drawAttractorBatch() {
+function drawAttractorBatch(params) {
   const mode = attractorMode.value;
-  const params = getCurrentParameters();
   const pointsPerFrame = Number(pointsPerFrameInput.value);
 
   applyFadeEffect();
@@ -219,7 +314,17 @@ function animationLoop(timestamp) {
   const frameInterval = 1000 / fps;
 
   if (!lastFrameTime || timestamp - lastFrameTime >= frameInterval) {
-    drawAttractorBatch();
+    let activeParams;
+
+    if (renderMode.value === "dynamic") {
+      activeParams = getMorphedParameters(timestamp / 1000);
+      setDisplayedParameterValues(activeParams);
+    } else {
+      activeParams = getCurrentParametersFromInputs();
+      setDisplayedParameterValues(activeParams);
+    }
+
+    drawAttractorBatch(activeParams);
     lastFrameTime = timestamp;
   }
 
@@ -249,7 +354,7 @@ function startAnimation() {
   isRunning = true;
   lastFrameTime = 0;
   setControlsLocked(true);
-  appStatus.textContent = `Running ${getModeLabel(attractorMode.value)}`;
+  appStatus.textContent = `Running ${getModeLabel(attractorMode.value)} · ${getRenderModeLabel(renderMode.value)}`;
 
   animationFrameId = window.requestAnimationFrame(animationLoop);
 }
@@ -263,6 +368,7 @@ function stopAnimation() {
   }
 
   setControlsLocked(false);
+  syncDisplayedValuesWithInputs();
   appStatus.textContent = "Stopped";
 }
 
@@ -278,15 +384,14 @@ function applyDefaultParameters(mode) {
   paramCInput.value = selectedDefaults.c.toFixed(2);
   paramDInput.value = selectedDefaults.d.toFixed(2);
 
-  sliderMappings.forEach(({ inputId, valueId, decimals }) => {
-    updateSliderValue(inputId, valueId, decimals);
-  });
+  syncDisplayedValuesWithInputs();
 }
 
 function prepareFreshRender(statusText = "Ready to render") {
   clearCanvas();
   resetAttractorState();
   needsFreshRender = true;
+  syncDisplayedValuesWithInputs();
   appStatus.textContent = statusText;
 }
 
@@ -306,6 +411,11 @@ function initializeModeSelect() {
     updateModeLabel();
     applyDefaultParameters(selectedMode);
     prepareFreshRender(`${getModeLabel(selectedMode)} selected`);
+  });
+
+  renderMode.addEventListener("change", () => {
+    applyRenderModeDefaults(renderMode.value);
+    prepareFreshRender(`${getRenderModeLabel(renderMode.value)} selected`);
   });
 }
 
@@ -336,9 +446,9 @@ function initializeControlButtons() {
     }
 
     const currentMode = attractorMode.value;
+    const currentRenderMode = renderMode.value;
 
     fpsControlInput.value = "30";
-    pointsPerFrameInput.value = "1000";
     selectedColor = "#ff4d4d";
 
     colorButtons.forEach((button) => {
@@ -346,11 +456,8 @@ function initializeControlButtons() {
     });
 
     applyDefaultParameters(currentMode);
-
-    sliderMappings.forEach(({ inputId, valueId, decimals }) => {
-      updateSliderValue(inputId, valueId, decimals);
-    });
-
+    applyRenderModeDefaults(currentRenderMode);
+    syncDisplayedValuesWithInputs();
     updateModeLabel();
     prepareFreshRender("Reset to default");
     setControlsLocked(false);
@@ -370,6 +477,7 @@ function initializeApp() {
   initializeControlButtons();
 
   applyDefaultParameters("dejong");
+  applyRenderModeDefaults("static");
   updateModeLabel();
 
   setControlsLocked(false);
