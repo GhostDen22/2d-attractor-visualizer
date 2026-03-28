@@ -1,186 +1,186 @@
 (() => {
-  const dom = window.AppDOM;
-  const state = window.AppState;
-  const ui = window.AppUI;
-  const attractors = window.AppAttractors;
-  const renderer = window.AppRenderer;
+    const dom = window.AppDOM;
+    const state = window.AppState;
+    const ui = window.AppUI;
+    const attractors = window.AppAttractors;
+    const renderer = window.AppRenderer;
 
-  function prepareFreshRender(statusText = "Ready to render") {
-    renderer.clearCanvas();
-    renderer.resetAttractorState();
-    state.needsFreshRender = true;
-    ui.syncDisplayedValuesWithInputs();
-    dom.appStatus.textContent = statusText;
-  }
-
-  function handleSettingsChanged() {
-    if (state.isRunning && !ui.isStaticDebugUnlocked()) {
-      return;
+    function prepareFreshRender(statusText = "Ready to render") {
+        renderer.clearCanvas();
+        renderer.resetAttractorState();
+        state.needsFreshRender = true;
+        ui.syncDisplayedValuesWithInputs();
+        dom.appStatus.textContent = statusText;
     }
 
-    if (state.isRunning && ui.isStaticDebugUnlocked()) {
-      renderer.clearCanvas();
-      renderer.resetAttractorState();
-      state.needsFreshRender = false;
-      dom.appStatus.textContent = "Debug update applied";
-      return;
+    function handleSettingsChanged() {
+        if (state.isRunning && !ui.isStaticDebugUnlocked()) {
+            return;
+        }
+
+        if (state.isRunning && ui.isStaticDebugUnlocked()) {
+            renderer.clearCanvas();
+            renderer.resetAttractorState();
+            state.needsFreshRender = false;
+            dom.appStatus.textContent = "Debug update applied";
+            return;
+        }
+
+        prepareFreshRender("Settings changed");
     }
 
-    prepareFreshRender("Settings changed");
-  }
+    function animationLoop(timestamp) {
+        if (!state.isRunning) {
+            return;
+        }
 
-  function animationLoop(timestamp) {
-    if (!state.isRunning) {
-      return;
+        const fps = Number(dom.fpsControlInput.value);
+        const frameInterval = 1000 / fps;
+
+        if (!state.lastFrameTime || timestamp - state.lastFrameTime >= frameInterval) {
+            let activeParams;
+
+            if (dom.renderMode.value === "dynamic") {
+                activeParams = attractors.getMorphedParameters(timestamp / 1000);
+                ui.setDisplayedParameterValues(activeParams);
+            } else {
+                activeParams = attractors.getCurrentParametersFromInputs();
+                ui.setDisplayedParameterValues(activeParams);
+            }
+
+            renderer.drawAttractorBatch(activeParams);
+            state.lastFrameTime = timestamp;
+        }
+
+        state.animationFrameId = window.requestAnimationFrame(animationLoop);
     }
 
-    const fps = Number(dom.fpsControlInput.value);
-    const frameInterval = 1000 / fps;
+    function startAnimation() {
+        if (state.isRunning) {
+            return;
+        }
 
-    if (!state.lastFrameTime || timestamp - state.lastFrameTime >= frameInterval) {
-      let activeParams;
+        if (state.needsFreshRender) {
+            renderer.clearCanvas();
+            renderer.resetAttractorState();
+            state.needsFreshRender = false;
+        }
 
-      if (dom.renderMode.value === "dynamic") {
-        activeParams = attractors.getMorphedParameters(timestamp / 1000);
-        ui.setDisplayedParameterValues(activeParams);
-      } else {
-        activeParams = attractors.getCurrentParametersFromInputs();
-        ui.setDisplayedParameterValues(activeParams);
-      }
+        state.isRunning = true;
+        state.lastFrameTime = 0;
+        ui.setControlsLocked(true);
+        dom.appStatus.textContent =
+            `Running ${ui.getModeLabel(dom.attractorMode.value)} · ${ui.getRenderModeLabel(dom.renderMode.value)}`;
 
-      renderer.drawAttractorBatch(activeParams);
-      state.lastFrameTime = timestamp;
+        state.animationFrameId = window.requestAnimationFrame(animationLoop);
     }
 
-    state.animationFrameId = window.requestAnimationFrame(animationLoop);
-  }
+    function stopAnimation() {
+        state.isRunning = false;
 
-  function startAnimation() {
-    if (state.isRunning) {
-      return;
+        if (state.animationFrameId) {
+            window.cancelAnimationFrame(state.animationFrameId);
+            state.animationFrameId = null;
+        }
+
+        ui.setControlsLocked(false);
+        ui.syncDisplayedValuesWithInputs();
+        dom.appStatus.textContent = "Stopped";
     }
 
-    if (state.needsFreshRender) {
-      renderer.clearCanvas();
-      renderer.resetAttractorState();
-      state.needsFreshRender = false;
+    function initializeModeSelect() {
+        ui.updateModeLabel();
+        ui.updateDebugModeVisibility();
+
+        dom.attractorMode.addEventListener("change", () => {
+            const selectedMode = dom.attractorMode.value;
+            ui.updateModeLabel();
+            ui.applyDefaultParameters(selectedMode);
+            prepareFreshRender(`${ui.getModeLabel(selectedMode)} selected`);
+        });
+
+        dom.renderMode.addEventListener("change", () => {
+            ui.applyRenderModeDefaults(dom.renderMode.value);
+            ui.updateDebugModeVisibility();
+            ui.setControlsLocked(state.isRunning);
+            prepareFreshRender(`${ui.getRenderModeLabel(dom.renderMode.value)} selected`);
+        });
+
+        dom.debugMode.addEventListener("change", () => {
+            ui.setControlsLocked(state.isRunning);
+            dom.appStatus.textContent = dom.debugMode.checked
+                ? "Debug mode enabled"
+                : "Debug mode disabled";
+        });
     }
 
-    state.isRunning = true;
-    state.lastFrameTime = 0;
-    ui.setControlsLocked(true);
-    dom.appStatus.textContent =
-      `Running ${ui.getModeLabel(dom.attractorMode.value)} · ${ui.getRenderModeLabel(dom.renderMode.value)}`;
+    function initializeColorButtons() {
+        dom.colorButtons.forEach((button) => {
+            button.addEventListener("click", () => {
+                dom.colorButtons.forEach((item) => item.classList.remove("is-active"));
+                button.classList.add("is-active");
+                state.selectedColor = button.dataset.color;
 
-    state.animationFrameId = window.requestAnimationFrame(animationLoop);
-  }
-
-  function stopAnimation() {
-    state.isRunning = false;
-
-    if (state.animationFrameId) {
-      window.cancelAnimationFrame(state.animationFrameId);
-      state.animationFrameId = null;
+                handleSettingsChanged();
+            });
+        });
     }
 
-    ui.setControlsLocked(false);
-    ui.syncDisplayedValuesWithInputs();
-    dom.appStatus.textContent = "Stopped";
-  }
+    function initializeControlButtons() {
+        dom.startBtn.addEventListener("click", () => {
+            startAnimation();
+        });
 
-  function initializeModeSelect() {
-    ui.updateModeLabel();
-    ui.updateDebugModeVisibility();
+        dom.stopBtn.addEventListener("click", () => {
+            stopAnimation();
+        });
 
-    dom.attractorMode.addEventListener("change", () => {
-      const selectedMode = dom.attractorMode.value;
-      ui.updateModeLabel();
-      ui.applyDefaultParameters(selectedMode);
-      prepareFreshRender(`${ui.getModeLabel(selectedMode)} selected`);
-    });
+        dom.resetBtn.addEventListener("click", () => {
+            if (state.isRunning) {
+                stopAnimation();
+            }
 
-    dom.renderMode.addEventListener("change", () => {
-      ui.applyRenderModeDefaults(dom.renderMode.value);
-      ui.updateDebugModeVisibility();
-      ui.setControlsLocked(state.isRunning);
-      prepareFreshRender(`${ui.getRenderModeLabel(dom.renderMode.value)} selected`);
-    });
+            const currentMode = dom.attractorMode.value;
+            const currentRenderMode = dom.renderMode.value;
 
-    dom.debugMode.addEventListener("change", () => {
-      ui.setControlsLocked(state.isRunning);
-      dom.appStatus.textContent = dom.debugMode.checked
-        ? "Debug mode enabled"
-        : "Debug mode disabled";
-    });
-  }
+            dom.fpsControlInput.value = "30";
+            state.selectedColor = "#ff4d4d";
 
-  function initializeColorButtons() {
-    dom.colorButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        dom.colorButtons.forEach((item) => item.classList.remove("is-active"));
-        button.classList.add("is-active");
-        state.selectedColor = button.dataset.color;
+            dom.colorButtons.forEach((button) => {
+                button.classList.toggle("is-active", button.dataset.color === state.selectedColor);
+            });
 
-        handleSettingsChanged();
-      });
-    });
-  }
+            ui.applyDefaultParameters(currentMode);
+            ui.applyRenderModeDefaults(currentRenderMode);
+            ui.updateDebugModeVisibility();
+            ui.syncDisplayedValuesWithInputs();
+            ui.updateModeLabel();
+            prepareFreshRender("Reset to default");
+            ui.setControlsLocked(false);
+        });
+    }
 
-  function initializeControlButtons() {
-    dom.startBtn.addEventListener("click", () => {
-      startAnimation();
-    });
+    function initializeCanvas() {
+        renderer.clearCanvas();
+        renderer.resetAttractorState();
+    }
 
-    dom.stopBtn.addEventListener("click", () => {
-      stopAnimation();
-    });
+    function initializeApp() {
+        initializeCanvas();
+        ui.initializeSliders(handleSettingsChanged);
+        initializeModeSelect();
+        initializeColorButtons();
+        initializeControlButtons();
 
-    dom.resetBtn.addEventListener("click", () => {
-      if (state.isRunning) {
-        stopAnimation();
-      }
+        ui.applyDefaultParameters("dejong");
+        ui.applyRenderModeDefaults("static");
+        ui.updateModeLabel();
+        ui.updateDebugModeVisibility();
 
-      const currentMode = dom.attractorMode.value;
-      const currentRenderMode = dom.renderMode.value;
+        ui.setControlsLocked(false);
+        dom.stopBtn.disabled = true;
+        dom.appStatus.textContent = "Ready";
+    }
 
-      dom.fpsControlInput.value = "30";
-      state.selectedColor = "#ff4d4d";
-
-      dom.colorButtons.forEach((button) => {
-        button.classList.toggle("is-active", button.dataset.color === state.selectedColor);
-      });
-
-      ui.applyDefaultParameters(currentMode);
-      ui.applyRenderModeDefaults(currentRenderMode);
-      ui.updateDebugModeVisibility();
-      ui.syncDisplayedValuesWithInputs();
-      ui.updateModeLabel();
-      prepareFreshRender("Reset to default");
-      ui.setControlsLocked(false);
-    });
-  }
-
-  function initializeCanvas() {
-    renderer.clearCanvas();
-    renderer.resetAttractorState();
-  }
-
-  function initializeApp() {
-    initializeCanvas();
-    ui.initializeSliders(handleSettingsChanged);
-    initializeModeSelect();
-    initializeColorButtons();
-    initializeControlButtons();
-
-    ui.applyDefaultParameters("dejong");
-    ui.applyRenderModeDefaults("static");
-    ui.updateModeLabel();
-    ui.updateDebugModeVisibility();
-
-    ui.setControlsLocked(false);
-    dom.stopBtn.disabled = true;
-    dom.appStatus.textContent = "Ready";
-  }
-
-  initializeApp();
+    initializeApp();
 })();
