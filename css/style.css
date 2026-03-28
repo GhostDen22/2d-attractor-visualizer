@@ -133,15 +133,42 @@ body {
   color: var(--text-soft);
 }
 
+.control-spacer {
+  height: 14px;
+}
+
 .control-input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 10px 42px 10px 12px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
-  background: #12161b;
+  background-color: #12161b;
   color: var(--text-main);
   outline: none;
   transition: opacity 0.18s ease, filter 0.18s ease, border-color 0.18s ease;
+}
+
+select.control-input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #8e98a6 50%),
+    linear-gradient(135deg, #8e98a6 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+select.control-input:hover {
+  border-color: #556375;
+}
+
+select.control-input::-ms-expand {
+  display: none;
 }
 
 .control-input:focus {
@@ -154,6 +181,18 @@ body {
 
 .control-slider {
   width: 100%;
+  accent-color: var(--accent-hover);
+  cursor: pointer;
+  transition: opacity 0.18s ease, filter 0.18s ease;
+}
+
+.debug-mode-wrapper {
+  margin-top: 14px;
+}
+
+.debug-checkbox {
+  width: 18px;
+  height: 18px;
   accent-color: var(--accent-hover);
   cursor: pointer;
   transition: opacity 0.18s ease, filter 0.18s ease;
@@ -223,7 +262,8 @@ body {
 .action-button:disabled,
 .control-input:disabled,
 .control-slider:disabled,
-.color-button:disabled {
+.color-button:disabled,
+.debug-checkbox:disabled {
   opacity: 0.45;
   cursor: not-allowed;
   filter: grayscale(0.2);
@@ -325,6 +365,19 @@ body {
   max-width: 1000px;
 }
 
+.site-footer {
+  margin-top: 24px;
+  padding: 18px 22px;
+  background: rgba(26, 31, 38, 0.95);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-main);
+}
+
+.site-footer p {
+  color: var(--text-soft);
+}
+
 @media (max-width: 1100px) {
   .main-layout {
     grid-template-columns: 300px minmax(0, 1fr);
@@ -377,7 +430,8 @@ body {
 @media (max-width: 560px) {
   .panel-section,
   .canvas-card,
-  .info-panel {
+  .info-panel,
+  .site-footer {
     padding: 16px;
   }
 

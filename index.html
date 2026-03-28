@@ -19,7 +19,7 @@
         </div>
 
         <div class="title-box">
-          <p class="eyebrow">Project M1 · Algorithmic Structures Visualization</p>
+          <p class="eyebrow">Project M I · Algorithmic Structures Visualization</p>
           <h1>2D Attractor Visualizer</h1>
           <p class="subtitle">Peter de Jong and Clifford Attractors</p>
         </div>
@@ -37,7 +37,7 @@
             <option value="clifford">Clifford</option>
           </select>
 
-          <div style="height: 14px;"></div>
+          <div class="control-spacer"></div>
 
           <label for="renderMode" class="control-label">Render mode</label>
           <select id="renderMode" class="control-input">
@@ -45,9 +45,9 @@
             <option value="dynamic">Dynamic Render</option>
           </select>
 
-          <div id="debugModeWrapper" style="margin-top: 14px;">
+          <div id="debugModeWrapper" class="debug-mode-wrapper">
             <label for="debugMode" class="control-label">Debug mode</label>
-            <input id="debugMode" type="checkbox" />
+            <input id="debugMode" class="debug-checkbox" type="checkbox" />
           </div>
         </section>
 
@@ -138,6 +138,10 @@
         where parameters change automatically over time to create dynamic visual transformations.
       </p>
     </section>
+
+    <footer class="site-footer">
+      <p>Project M I · Visualization of Peter de Jong and Clifford Attractors</p>
+    </footer>
   </div>
 
   <script src="js/app.js"></script>
