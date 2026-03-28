@@ -141,6 +141,7 @@ body {
   background: #12161b;
   color: var(--text-main);
   outline: none;
+  transition: opacity 0.18s ease, filter 0.18s ease, border-color 0.18s ease;
 }
 
 .control-input:focus {
@@ -155,6 +156,7 @@ body {
   width: 100%;
   accent-color: var(--accent-hover);
   cursor: pointer;
+  transition: opacity 0.18s ease, filter 0.18s ease;
 }
 
 .color-options {
@@ -170,7 +172,7 @@ body {
   border: 2px solid #ffffff22;
   background: var(--swatch);
   cursor: pointer;
-  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, filter 0.18s ease;
 }
 
 .color-button:hover {
@@ -199,7 +201,7 @@ body {
   color: var(--text-main);
   cursor: pointer;
   font-weight: 600;
-  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease, opacity 0.18s ease;
 }
 
 .action-button:hover {
@@ -216,6 +218,21 @@ body {
 .primary-button:hover {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
+}
+
+.action-button:disabled,
+.control-input:disabled,
+.control-slider:disabled,
+.color-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.2);
+  pointer-events: none;
+}
+
+.action-button:disabled:hover,
+.color-button:disabled:hover {
+  transform: none;
 }
 
 .status-box {
