@@ -1,149 +1,167 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>2D Attractor Visualizer</title>
-  <meta
-    name="description"
-    content="Interactive web application for visualizing and animating Peter de Jong and Clifford attractors."
-  />
-  <link rel="stylesheet" href="css/style.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2D Attractor Visualizer</title>
+    <meta name="description"
+        content="Interactive web application for visualizing and animating Peter de Jong and Clifford attractors." />
+    <link rel="stylesheet" href="css/style.css" />
 </head>
+
 <body>
-  <div class="page-shell">
-    <header class="site-header">
-      <div class="brand-block">
-        <div class="logo-box">
-          <img src="assets/images/UWB.svg" alt="UWB Branch Logo" class="logo-image" />
-        </div>
+    <div class="page-shell">
+        <header class="site-header">
+            <div class="brand-block">
+                <div class="logo-box">
+                    <img src="assets/images/UWB.svg" alt="UWB Branch Logo" class="logo-image" />
+                </div>
 
-        <div class="title-box">
-          <p class="eyebrow">Project M I · Algorithmic Structures Visualization</p>
-          <h1>2D Attractor Visualizer</h1>
-          <p class="subtitle">Peter de Jong and Clifford Attractors</p>
-        </div>
-      </div>
-    </header>
+                <div class="title-box">
+                    <p class="eyebrow">Project M I · Algorithmic Structures Visualization</p>
+                    <h1>2D Attractor Visualizer</h1>
+                    <p class="subtitle">Peter de Jong and Clifford Attractors</p>
+                </div>
+            </div>
+        </header>
 
-    <main class="main-layout">
-      <aside class="control-panel">
-        <section class="panel-section">
-          <h2>Mode</h2>
+        <main class="main-layout">
+            <aside class="control-panel">
+                <section class="panel-section">
+                    <h2>Mode</h2>
 
-          <label for="attractorMode" class="control-label">Select attractor</label>
-          <select id="attractorMode" class="control-input">
-            <option value="dejong">Peter de Jong</option>
-            <option value="clifford">Clifford</option>
-          </select>
+                    <label for="attractorMode" class="control-label">Select attractor</label>
+                    <select id="attractorMode" class="control-input">
+                        <option value="dejong">Peter de Jong</option>
+                        <option value="clifford">Clifford</option>
+                    </select>
 
-          <div class="control-spacer"></div>
+                    <div class="control-spacer"></div>
 
-          <label for="renderMode" class="control-label">Render mode</label>
-          <select id="renderMode" class="control-input">
-            <option value="static">Static Render</option>
-            <option value="dynamic">Dynamic Render</option>
-          </select>
+                    <label for="renderMode" class="control-label">Render mode</label>
+                    <select id="renderMode" class="control-input">
+                        <option value="static">Static Render</option>
+                        <option value="dynamic">Dynamic Render</option>
+                    </select>
 
-          <div id="debugModeWrapper" class="debug-mode-wrapper">
-            <label for="debugMode" class="control-label">Debug mode</label>
-            <input id="debugMode" class="debug-checkbox" type="checkbox" />
-          </div>
+                    <div id="debugModeWrapper" class="debug-mode-wrapper">
+                        <label for="debugMode" class="control-label">Debug mode</label>
+                        <input id="debugMode" class="debug-checkbox" type="checkbox" />
+                    </div>
+                </section>
+
+                <section class="panel-section">
+                    <h2>Parameters</h2>
+
+                    <div class="slider-group">
+                        <label for="paramA" class="control-label">a <span id="valueA">1.40</span></label>
+                        <input type="range" id="paramA" class="control-slider" min="-3" max="3" step="0.01"
+                            value="1.40" />
+                    </div>
+
+                    <div class="slider-group">
+                        <label for="paramB" class="control-label">b <span id="valueB">-2.30</span></label>
+                        <input type="range" id="paramB" class="control-slider" min="-3" max="3" step="0.01"
+                            value="-2.30" />
+                    </div>
+
+                    <div class="slider-group">
+                        <label for="paramC" class="control-label">c <span id="valueC">2.40</span></label>
+                        <input type="range" id="paramC" class="control-slider" min="-3" max="3" step="0.01"
+                            value="2.40" />
+                    </div>
+
+                    <div class="slider-group">
+                        <label for="paramD" class="control-label">d <span id="valueD">-2.10</span></label>
+                        <input type="range" id="paramD" class="control-slider" min="-3" max="3" step="0.01"
+                            value="-2.10" />
+                    </div>
+                </section>
+
+                <section class="panel-section">
+                    <h2>Animation</h2>
+
+                    <div class="slider-group">
+                        <label for="fpsControl" class="control-label">FPS <span id="valueFps">30</span></label>
+                        <input type="range" id="fpsControl" class="control-slider" min="10" max="60" step="1"
+                            value="30" />
+                    </div>
+
+                    <div class="slider-group">
+                        <label for="pointsPerFrame" class="control-label">Points / frame <span
+                                id="valuePoints">1000</span></label>
+                        <input type="range" id="pointsPerFrame" class="control-slider" min="100" max="5000" step="100"
+                            value="1000" />
+                    </div>
+                </section>
+
+                <section class="panel-section">
+                    <h2>Color</h2>
+
+                    <div class="color-options">
+                        <button class="color-button is-active" data-color="#ff4d4d" style="--swatch:#ff4d4d;"
+                            aria-label="Red"></button>
+                        <button class="color-button" data-color="#4dff88" style="--swatch:#4dff88;"
+                            aria-label="Green"></button>
+                        <button class="color-button" data-color="#ff9f1c" style="--swatch:#ff9f1c;"
+                            aria-label="Orange"></button>
+                        <button class="color-button" data-color="#ffffff" style="--swatch:#ffffff;"
+                            aria-label="White"></button>
+                    </div>
+                </section>
+
+                <section class="panel-section">
+                    <h2>Controls</h2>
+
+                    <div class="button-row">
+                        <button id="startBtn" class="action-button primary-button" type="button">Start</button>
+                        <button id="stopBtn" class="action-button" type="button">Stop</button>
+                        <button id="resetBtn" class="action-button" type="button">Reset</button>
+                    </div>
+
+                    <div class="status-box">
+                        <span class="status-label">Status:</span>
+                        <span id="appStatus" class="status-value">Ready</span>
+                    </div>
+                </section>
+            </aside>
+
+            <section class="visualization-panel">
+                <div class="canvas-card">
+                    <div class="canvas-toolbar">
+                        <span class="canvas-title">Attractor Preview</span>
+                        <span class="canvas-mode" id="canvasModeLabel">Peter de Jong</span>
+                    </div>
+
+                    <div class="canvas-wrapper">
+                        <canvas id="attractorCanvas" width="960" height="640"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <section class="info-panel">
+            <h2>About the project</h2>
+            <p>
+                This application visualizes and animates two-dimensional algorithmic structures:
+                Peter de Jong and Clifford attractors. It includes a static render mode and a dynamic render mode,
+                where parameters change automatically over time to create dynamic visual transformations.
+            </p>
         </section>
 
-        <section class="panel-section">
-          <h2>Parameters</h2>
+        <footer class="site-footer">
+            <p>Project M I · Visualization of Peter de Jong and Clifford Attractors</p>
+        </footer>
+    </div>
 
-          <div class="slider-group">
-            <label for="paramA" class="control-label">a <span id="valueA">1.40</span></label>
-            <input type="range" id="paramA" class="control-slider" min="-3" max="3" step="0.01" value="1.40" />
-          </div>
-
-          <div class="slider-group">
-            <label for="paramB" class="control-label">b <span id="valueB">-2.30</span></label>
-            <input type="range" id="paramB" class="control-slider" min="-3" max="3" step="0.01" value="-2.30" />
-          </div>
-
-          <div class="slider-group">
-            <label for="paramC" class="control-label">c <span id="valueC">2.40</span></label>
-            <input type="range" id="paramC" class="control-slider" min="-3" max="3" step="0.01" value="2.40" />
-          </div>
-
-          <div class="slider-group">
-            <label for="paramD" class="control-label">d <span id="valueD">-2.10</span></label>
-            <input type="range" id="paramD" class="control-slider" min="-3" max="3" step="0.01" value="-2.10" />
-          </div>
-        </section>
-
-        <section class="panel-section">
-          <h2>Animation</h2>
-
-          <div class="slider-group">
-            <label for="fpsControl" class="control-label">FPS <span id="valueFps">30</span></label>
-            <input type="range" id="fpsControl" class="control-slider" min="10" max="60" step="1" value="30" />
-          </div>
-
-          <div class="slider-group">
-            <label for="pointsPerFrame" class="control-label">Points / frame <span id="valuePoints">1000</span></label>
-            <input type="range" id="pointsPerFrame" class="control-slider" min="100" max="5000" step="100" value="1000" />
-          </div>
-        </section>
-
-        <section class="panel-section">
-          <h2>Color</h2>
-
-          <div class="color-options">
-            <button class="color-button is-active" data-color="#ff4d4d" style="--swatch:#ff4d4d;" aria-label="Red"></button>
-            <button class="color-button" data-color="#4dff88" style="--swatch:#4dff88;" aria-label="Green"></button>
-            <button class="color-button" data-color="#ff9f1c" style="--swatch:#ff9f1c;" aria-label="Orange"></button>
-            <button class="color-button" data-color="#ffffff" style="--swatch:#ffffff;" aria-label="White"></button>
-          </div>
-        </section>
-
-        <section class="panel-section">
-          <h2>Controls</h2>
-
-          <div class="button-row">
-            <button id="startBtn" class="action-button primary-button" type="button">Start</button>
-            <button id="stopBtn" class="action-button" type="button">Stop</button>
-            <button id="resetBtn" class="action-button" type="button">Reset</button>
-          </div>
-
-          <div class="status-box">
-            <span class="status-label">Status:</span>
-            <span id="appStatus" class="status-value">Ready</span>
-          </div>
-        </section>
-      </aside>
-
-      <section class="visualization-panel">
-        <div class="canvas-card">
-          <div class="canvas-toolbar">
-            <span class="canvas-title">Attractor Preview</span>
-            <span class="canvas-mode" id="canvasModeLabel">Peter de Jong</span>
-          </div>
-
-          <div class="canvas-wrapper">
-            <canvas id="attractorCanvas" width="960" height="640"></canvas>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <section class="info-panel">
-      <h2>About the project</h2>
-      <p>
-        This application visualizes and animates two-dimensional algorithmic structures:
-        Peter de Jong and Clifford attractors. It includes a static render mode and a dynamic render mode,
-        where parameters change automatically over time to create dynamic visual transformations.
-      </p>
-    </section>
-
-    <footer class="site-footer">
-      <p>Project M I · Visualization of Peter de Jong and Clifford Attractors</p>
-    </footer>
-  </div>
-
-  <script src="js/app.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/dom.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/attractors.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/app.js"></script>
 </body>
+
 </html>
